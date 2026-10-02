@@ -1,0 +1,87 @@
+name: narada
+description: "Narada — Decentralized P2P encrypted messaging"
+publish_to: 'none'
+version: 3.2.0+5
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Cryptography
+  cryptography: ^2.7.0
+  flutter_secure_storage: ^9.2.4
+  convert: ^3.1.2
+
+  # Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.5
+
+  # State Management
+  provider: ^6.1.2
+
+  # Networking
+  bonsoir: ^5.1.2
+  uuid: ^4.5.1
+
+  # BLE Mesh & Relay
+  flutter_blue_plus: ^1.35.2
+  permission_handler: ^11.3.1
+  web_socket_channel: ^3.0.2
+
+  # Background & Hardware Sensors
+  flutter_background_service: 5.1.0
+  flutter_local_notifications: ^17.1.1
+  sensors_plus: ^5.0.1
+  
+  # High Bandwidth P2P Fallback (Wi-Fi Direct)
+  nearby_connections: ^4.3.0
+
+  # UI
+  shimmer: ^3.0.0
+  flutter_animate: ^4.5.2
+  animate_do: ^3.3.4
+  intl: ^0.20.2
+  file_picker: ^8.1.6
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.0
+
+  # Native ML-KEM (FIPS 203) binding and Nostr relay signing
+  ffi: ^2.2.0
+  bip340: ^0.3.1
+  image: ^4.9.2
+  record: ^6.2.1
+  just_audio: ^0.10.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
+
+flutter_native_splash:
+  color: "#000000"
+  image: "favicon.png"
+  android_12:
+    color: "#000000"
+    image: "favicon.png"
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "favicon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "favicon.png"
+
+flutter:
+  uses-material-design: true
+  generate: true

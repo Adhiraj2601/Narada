@@ -1,0 +1,22 @@
+# Static analysis configuration for NyxChat.
+# https://dart.dev/guides/language/analysis-options
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - flutter_sdk/**
+    - build/**
+    - .dart_tool/**
+    - "**/*.g.dart"
+  errors:
+    # Treat these as errors so CI fails on them.
+    unused_import: error
+    dead_code: warning
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    avoid_print: true
+    unawaited_futures: true
+    prefer_final_locals: true
