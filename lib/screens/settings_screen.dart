@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -111,7 +114,17 @@ class SettingsScreen extends StatelessWidget {
   Widget _profile(BuildContext context, IdentityService identity) {
     final id = identity.identity!;
     final card = identity.contactCard();
-    final cardText = 'nyx3;${card['id']};${card['name']};${card['ik']};${card['sk']};${card['kpk']}';
+
+    // Encode keys as Base64url (no padding) → "nyx4" format.
+    // This shrinks the QR payload by ~33% vs hex, making it reliably scannable.
+    String toB64(String hex) {
+      final bytes = Uint8List.fromList(
+          List.generate(hex.length ~/ 2, (i) => int.parse(hex.substring(i * 2, i * 2 + 2), radix: 16)));
+      return base64Url.encode(bytes).replaceAll('=', '');
+    }
+
+    final cardText = 'nyx4;${card['id']};${card['name']};${toB64(card['ik'] as String)};${toB64(card['sk'] as String)};${toB64(card['kpk'] as String)}';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -150,7 +163,7 @@ class SettingsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-          child: QrImageView(data: cardText, size: 180, backgroundColor: Colors.white),
+          child: QrImageView(data: cardText, size: 240, backgroundColor: Colors.white),
         ),
         const SizedBox(height: 10),
         TextButton.icon(

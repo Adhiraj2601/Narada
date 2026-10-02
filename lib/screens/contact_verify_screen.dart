@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -129,7 +132,7 @@ class _ContactVerifyScreenState extends State<ContactVerifyScreen> {
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
                         child: QrImageView(
                           data: _cardJson(context),
-                          size: 200,
+                          size: 220,
                           backgroundColor: Colors.white,
                         ),
                       ),
@@ -158,8 +161,13 @@ class _ContactVerifyScreenState extends State<ContactVerifyScreen> {
 
   String _cardJson(BuildContext context) {
     final card = context.read<IdentityService>().contactCard();
-    // Compact key=value form keeps the QR small.
-    return 'nyx3;${card['id']};${card['name']};${card['ik']};${card['sk']};${card['kpk']}';
+    // Encode keys as Base64url (no padding) → compact "nyx4" wire format.
+    String toB64(String hex) {
+      final bytes = Uint8List.fromList(
+          List.generate(hex.length ~/ 2, (i) => int.parse(hex.substring(i * 2, i * 2 + 2), radix: 16)));
+      return base64Url.encode(bytes).replaceAll('=', '');
+    }
+    return 'nyx4;${card['id']};${card['name']};${toB64(card['ik'] as String)};${toB64(card['sk'] as String)};${toB64(card['kpk'] as String)}';
   }
 
   String _when(DateTime t) => DateFormat.yMMMd(Localizations.localeOf(context).toString())

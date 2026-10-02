@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
@@ -6,13 +8,48 @@ import '../core/storage/trust_store.dart';
 import '../l10n/l10n_context.dart';
 import '../theme/app_theme.dart';
 
+/// Convert a Base64url (no-padding) string to its lowercase hex equivalent.
+String _b64ToHex(String b64) {
+  // Restore padding that was stripped for compactness.
+  final padded = b64.padRight((b64.length + 3) ~/ 4 * 4, '=');
+  final bytes = base64Url.decode(padded);
+  return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+}
+
 /// Parse the compact text form of a contact card.
+///
+/// Supports two wire formats:
+///  • `nyx4;id;name;ik_b64;sk_b64;kpk_b64` — current (Base64url keys)
+///  • `nyx3;id;name;ik_hex;sk_hex;kpk_hex` — legacy (hex keys)
 Map<String, dynamic>? parseContactCard(String raw) {
   final s = raw.trim();
-  if (!s.startsWith('nyx3;')) return null;
-  final parts = s.split(';');
-  if (parts.length != 6) return null;
-  return {'nyx': 3, 'id': parts[1], 'name': parts[2], 'ik': parts[3], 'sk': parts[4], 'kpk': parts[5]};
+
+  if (s.startsWith('nyx4;')) {
+    // Current format: keys are Base64url-encoded (no padding).
+    final parts = s.split(';');
+    if (parts.length != 6) return null;
+    try {
+      return {
+        'nyx': 3,
+        'id': parts[1],
+        'name': parts[2],
+        'ik': _b64ToHex(parts[3]),
+        'sk': _b64ToHex(parts[4]),
+        'kpk': _b64ToHex(parts[5]),
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  if (s.startsWith('nyx3;')) {
+    // Legacy format: keys are hex-encoded.
+    final parts = s.split(';');
+    if (parts.length != 6) return null;
+    return {'nyx': 3, 'id': parts[1], 'name': parts[2], 'ik': parts[3], 'sk': parts[4], 'kpk': parts[5]};
+  }
+
+  return null;
 }
 
 /// Camera scanner for contact-card QR codes. Pops with the pinned
