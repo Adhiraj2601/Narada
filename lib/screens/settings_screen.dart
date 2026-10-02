@@ -123,7 +123,7 @@ class SettingsScreen extends StatelessWidget {
       return base64Url.encode(bytes).replaceAll('=', '');
     }
 
-    final cardText = 'nyx4;${card['id']};${card['name']};${toB64(card['ik'] as String)};${toB64(card['sk'] as String)};${toB64(card['kpk'] as String)}';
+    final cardText = 'nrd1;${card['id']};${card['name']};${toB64(card['ik'] as String)};${toB64(card['sk'] as String)};${toB64(card['kpk'] as String)}';
 
     return Container(
       padding: const EdgeInsets.all(20),

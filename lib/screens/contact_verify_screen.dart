@@ -167,7 +167,7 @@ class _ContactVerifyScreenState extends State<ContactVerifyScreen> {
           List.generate(hex.length ~/ 2, (i) => int.parse(hex.substring(i * 2, i * 2 + 2), radix: 16)));
       return base64Url.encode(bytes).replaceAll('=', '');
     }
-    return 'nyx4;${card['id']};${card['name']};${toB64(card['ik'] as String)};${toB64(card['sk'] as String)};${toB64(card['kpk'] as String)}';
+    return 'nrd1;${card['id']};${card['name']};${toB64(card['ik'] as String)};${toB64(card['sk'] as String)};${toB64(card['kpk'] as String)}';
   }
 
   String _when(DateTime t) => DateFormat.yMMMd(Localizations.localeOf(context).toString())

@@ -18,13 +18,14 @@ String _b64ToHex(String b64) {
 
 /// Parse the compact text form of a contact card.
 ///
-/// Supports two wire formats:
-///  • `nyx4;id;name;ik_b64;sk_b64;kpk_b64` — current (Base64url keys)
-///  • `nyx3;id;name;ik_hex;sk_hex;kpk_hex` — legacy (hex keys)
+/// Supports three wire formats:
+///  • `nrd1;id;name;ik_b64;sk_b64;kpk_b64` — current Narada v1 (Base64url keys)
+///  • `nyx4;id;name;ik_b64;sk_b64;kpk_b64` — transitional alias (pre-rename)
+///  • `nyx3;id;name;ik_hex;sk_hex;kpk_hex`  — legacy (hex keys)
 Map<String, dynamic>? parseContactCard(String raw) {
   final s = raw.trim();
 
-  if (s.startsWith('nyx4;')) {
+  if (s.startsWith('nrd1;') || s.startsWith('nyx4;')) {
     // Current format: keys are Base64url-encoded (no padding).
     final parts = s.split(';');
     if (parts.length != 6) return null;

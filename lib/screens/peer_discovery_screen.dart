@@ -153,7 +153,7 @@ class _PeerDiscoveryScreenState extends State<PeerDiscoveryScreen> {
               const SizedBox(height: 18),
               _section(context.l10n.addContactFromCard),
               _hint(context.l10n.pasteContactCardHint),
-              _input(_card, 'nyx4;NC-...;name;...', maxLines: 3),
+              _input(_card, 'nrd1;NC-...;name;...', maxLines: 3),
               const SizedBox(height: 8),
               _button(context.l10n.importCard, _importCard),
               const SizedBox(height: 18),
