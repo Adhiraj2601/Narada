@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -64,9 +66,34 @@ class SettingsScreen extends StatelessWidget {
                 _row(context, Icons.wifi_rounded, context.l10n.localNetwork, peers.isNetworkActive ? context.l10n.active : context.l10n.inactive,
                     color: peers.isNetworkActive ? context.nyx.accentGreen : context.nyx.textMuted),
                 _row(context, Icons.people_alt_outlined, context.l10n.directLinks, '${peers.connectedPeers.length}'),
-                _row(context, Icons.bluetooth_rounded, context.l10n.bluetoothMesh,
-                    !ble.isSupported ? context.l10n.unsupported : ble.isAdvertising ? context.l10n.advertisingLinks(ble.linkCount) : ble.isScanning ? context.l10n.scanningLinks(ble.linkCount) : context.l10n.off,
-                    color: ble.isScanning || ble.isAdvertising ? context.nyx.accentGreen : context.nyx.textMuted),
+                _toggle(
+                  context,
+                  Icons.bluetooth_rounded,
+                  context.l10n.bluetoothMesh,
+                  peers.isBleActive || ble.isScanning || ble.isAdvertising,
+                  (enabled) async {
+                    if (enabled) {
+                      if (Platform.isAndroid || Platform.isIOS) {
+                        await [
+                          Permission.bluetoothScan,
+                          Permission.bluetoothAdvertise,
+                          Permission.bluetoothConnect,
+                          Permission.locationWhenInUse,
+                        ].request();
+                      }
+                      await peers.startBle();
+                    } else {
+                      await peers.stopBle();
+                    }
+                  },
+                  subtitle: !ble.isSupported
+                      ? context.l10n.unsupported
+                      : ble.isAdvertising
+                          ? context.l10n.advertisingLinks(ble.linkCount)
+                          : ble.isScanning
+                              ? context.l10n.scanningLinks(ble.linkCount)
+                              : context.l10n.off,
+                ),
                 _toggle(context, Icons.settings_input_antenna_rounded, context.l10n.bleLongRange, settings.longRangeBle, (v) async {
                   await settings.setLongRangeBle(v);
                   ble.setLongRange(v);

@@ -51,6 +51,8 @@ analyze_output.txt
 *.keystore
 upload-keystore.jks
 keystore_credentials.txt
+*.apk
+*.aab
 
 # agent worktrees
 .claude/worktrees/

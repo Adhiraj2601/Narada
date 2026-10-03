@@ -60,8 +60,10 @@ class BleManager extends ChangeNotifier {
   bool _peripheralSupported = false;
   bool _longRange = false;
   bool _isStationary = false;
+  bool _active = false;
   String? _myNyxId;
   String _myRelayIdHex = '';
+  Uint8List? _lastBeacon;
 
   final Map<String, BlePeer> _discovered = {};
   final Map<String, BleLink> _links = {};
@@ -94,8 +96,21 @@ class BleManager extends ChangeNotifier {
       _isSupported = await FlutterBluePlus.isSupported;
       if (!_isSupported) return;
       _peripheralSupported = await _peripheral.isSupported();
-      _subs.add(FlutterBluePlus.adapterState.listen((state) {
-        if (state != BluetoothAdapterState.on) _stopAll();
+      _subs.add(FlutterBluePlus.adapterState.listen((state) async {
+        if (state != BluetoothAdapterState.on) {
+          _stopAll();
+        } else {
+          // If Bluetooth adapter turns on while active, resume peripheral & scanning
+          if (_active && _myNyxId != null) {
+            _peripheralSupported = await _peripheral.isSupported();
+            if (_peripheralSupported && _lastBeacon != null && !_peripheral.isAdvertising) {
+              await _peripheral.start(_lastBeacon!);
+            }
+            if (!_isScanning) {
+              await startScanning();
+            }
+          }
+        }
       }));
       _initSensors();
     } catch (e) {
@@ -133,9 +148,15 @@ class BleManager extends ChangeNotifier {
 
   /// Start scanning and advertising [beacon].
   Future<void> start(String myNyxId, {required String relayIdHex, required Uint8List beacon}) async {
-    if (!_isSupported) return;
+    _active = true;
     _myNyxId = myNyxId;
     _myRelayIdHex = relayIdHex;
+    _lastBeacon = beacon;
+    if (!_isSupported) {
+      _isSupported = await FlutterBluePlus.isSupported;
+      if (!_isSupported) return;
+    }
+    _peripheralSupported = await _peripheral.isSupported();
     _peripheral.onWrite = _onPeripheralWrite;
     _peripheral.onSubscribed = _onCentralSubscribed;
     _peripheral.onDisconnected = (address) {
@@ -153,6 +174,7 @@ class BleManager extends ChangeNotifier {
 
   /// Rotate the advertised beacon.
   Future<void> updateBeacon(Uint8List beacon) async {
+    _lastBeacon = beacon;
     if (_peripheralSupported && _peripheral.isAdvertising) {
       await _peripheral.updateBeacon(beacon);
     }
@@ -183,6 +205,10 @@ class BleManager extends ChangeNotifier {
       });
     }).catchError((e) {
       debugPrint('[BLE] scan error: $e');
+      // Reschedule scan after brief delay rather than terminating permanently
+      _scanTimer = Timer(const Duration(seconds: 8), () {
+        if (_isScanning) _scanCycle();
+      });
     });
   }
 
@@ -405,6 +431,8 @@ class BleManager extends ChangeNotifier {
   }
 
   Future<void> stop() async {
+    _active = false;
+    _lastBeacon = null;
     await stopScanning();
     await _peripheral.stop();
     for (final link in _links.values.toList()) {

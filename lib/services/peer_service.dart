@@ -326,7 +326,10 @@ class PeerService extends ChangeNotifier {
   }
 
   Future<void> startBle() async {
-    if (_bleActive || !_bleManager.isSupported) return;
+    if (!_bleManager.isSupported) {
+      await _bleManager.init();
+      if (!_bleManager.isSupported) return;
+    }
     final b = await _beacon(bits: DiscoveryBeacon.bleBloomBits);
     _bleBeaconSlot = b.slot;
     await _bleManager.start(_myId, relayIdHex: _meshRouter.relayIdHex, beacon: b.encodeBle());
