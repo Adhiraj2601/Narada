@@ -29,10 +29,17 @@ class P2PServer {
 
   Future<void> start() async {
     if (_serverSocket != null) return;
-    // Dual-stack: LAN peers over IPv4, Wi-Fi Aware peers over link-local IPv6.
-    _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv6, port,
-        shared: true);
-    debugPrint('[P2P] listening on $port');
+    try {
+      // Dual-stack: LAN peers over IPv4, Wi-Fi Aware peers over link-local IPv6.
+      _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv6, port,
+          shared: true, v6Only: false);
+      debugPrint('[P2P] listening on anyIPv6:$port (dual-stack)');
+    } catch (e) {
+      debugPrint('[P2P] anyIPv6 bind failed ($e), falling back to anyIPv4:$port');
+      _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port,
+          shared: true);
+      debugPrint('[P2P] listening on anyIPv4:$port');
+    }
     _serverSocket!.listen(_handle, onError: (e) {
       debugPrint('[P2P] server error: $e');
     });

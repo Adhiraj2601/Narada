@@ -114,10 +114,24 @@ class PeerDiscovery {
     _discovery = BonsoirDiscovery(type: AppConstants.serviceType);
     await _discovery!.ready;
     _discovery!.eventStream!.listen((event) {
-      if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound ||
-          event.type == BonsoirDiscoveryEventType.discoveryServiceResolved) {
+      if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
         final s = event.service;
-        if (s is ResolvedBonsoirService) unawaited(_onResolved(s));
+        if (s is ResolvedBonsoirService) {
+          unawaited(_onResolved(s));
+        } else if (s != null) {
+          try {
+            debugPrint('[mDNS] found service: ${s.name}, resolving...');
+            s.resolve(_discovery!.serviceResolver);
+          } catch (e) {
+            debugPrint('[mDNS] resolve error: $e');
+          }
+        }
+      } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceResolved) {
+        final s = event.service;
+        if (s is ResolvedBonsoirService) {
+          debugPrint('[mDNS] resolved service: ${s.name} at ${s.host}:${s.port}');
+          unawaited(_onResolved(s));
+        }
       } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceLost) {
         _onLost(event.service);
       }
@@ -128,9 +142,16 @@ class PeerDiscovery {
 
   Future<void> _onResolved(ResolvedBonsoirService service) async {
     final beacon = DiscoveryBeacon.fromTxt(service.attributes);
-    if (beacon == null) return;
-    final host = service.host ?? '';
-    if (host.isEmpty) return;
+    if (beacon == null) {
+      debugPrint('[mDNS] ignoring service without valid beacon: ${service.name}');
+      return;
+    }
+    var host = (service.host ?? '').trim();
+    if (host.startsWith('/')) host = host.substring(1);
+    if (host.isEmpty) {
+      debugPrint('[mDNS] ignoring service with empty host: ${service.name}');
+      return;
+    }
     final ids = <String>[];
     var candidate = false;
     if (beacon.isPublic) {

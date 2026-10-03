@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -29,6 +31,30 @@ class _PeerDiscoveryScreenState extends State<PeerDiscoveryScreen> {
   final _lookup = TextEditingController();
   final _bootstrap = TextEditingController();
   bool _busy = false;
+  String? _myIp;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMyIp();
+  }
+
+  Future<void> _fetchMyIp() async {
+    try {
+      final interfaces = await NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLinkLocal: false,
+      );
+      for (final iface in interfaces) {
+        for (final addr in iface.addresses) {
+          if (!addr.isLoopback) {
+            if (mounted) setState(() => _myIp = addr.address);
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -158,6 +184,13 @@ class _PeerDiscoveryScreenState extends State<PeerDiscoveryScreen> {
               _button(context.l10n.importCard, _importCard),
               const SizedBox(height: 18),
               _section(context.l10n.manualConnection),
+              if (_myIp != null) ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text('Your IP: $_myIp  ·  Port: 42420',
+                      style: TextStyle(color: context.nyx.accentBlue, fontSize: 12, fontFamily: 'monospace', fontWeight: FontWeight.w500)),
+                ),
+              ],
               Row(children: [
                 Expanded(flex: 3, child: _input(_address, context.l10n.ipAddressHint)),
                 const SizedBox(width: 8),
